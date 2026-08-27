@@ -1,16 +1,40 @@
 <?php
 
+function cm_get_csv_data($url) {
+    $response = wp_remote_get($url, array('timeout' => 30));
+
+    if (is_wp_error($response)) {
+        error_log('AdOps Sync Error: ' . $response->get_error_message());
+        return false;
+    }
+
+    $body = wp_remote_retrieve_body($response);
+    if (empty($body)) return false;
+
+    // Satırları böl (Windows, Mac ve Linux uyumlu)
+    $lines = preg_split('/\r\n|\r|\n/', $body);
+    
+    // Boş satırları temizle ve CSV olarak parse et
+    $data = array_map('str_getcsv', array_filter($lines));
+    
+    return $data;
+}
+
 function cm_sync_google_sheet_data($dash_url, $pay_url) {
     if (empty($dash_url) || empty($pay_url)) return ['success' => false, 'message' => 'API Endpoints tanımlanmamış.'];
 
-    $dash_data = array_map('str_getcsv', file($dash_url));
+    // Düzeltme: file() yerine yeni fonksiyon kullanılıyor
+    $dash_data = cm_get_csv_data($dash_url);
+    
     if (!$dash_data) return ['success' => false, 'message' => 'Data Source bağlantısı başarısız. (Error: 101 - Stream Unreachable)'];
     
     $header = array_map(function($h) { return trim(strtolower(str_replace(["\xEF\xBB\xBF", ' '], ['', '_'], $h))); }, array_shift($dash_data));
 
     $campaigns = [];
     foreach ($dash_data as $row) {
+        // Satır sütun sayısı başlık sayısıyla eşleşmiyorsa atla
         if (count($row) !== count($header)) continue;
+        
         $d = array_combine($header, $row);
         $id = $d['kampanya_id'] ?? '';
         if (!$id) continue;
@@ -35,7 +59,9 @@ function cm_sync_google_sheet_data($dash_url, $pay_url) {
         ];
     }
 
-    $pay_data = array_map('str_getcsv', file($pay_url));
+    // Düzeltme: file() yerine yeni fonksiyon kullanılıyor
+    $pay_data = cm_get_csv_data($pay_url);
+    
     $total_payment_pool = 0;
     if ($pay_data) {
         $p_header = array_map('strtolower', array_shift($pay_data));
