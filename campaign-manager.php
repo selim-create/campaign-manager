@@ -139,3 +139,20 @@ function cm_handle_sync_page() {
     <?php
     echo '</div>';
 }
+
+// ---------------------------------------------------------
+// 3. DASHBOARD UI OVERRIDES
+// ---------------------------------------------------------
+
+add_action( 'wp_head', 'cm_hide_v2_total_conversion_summary_card', 99 );
+function cm_hide_v2_total_conversion_summary_card() {
+    if ( 'v2' !== (string) get_option( 'cm_data_schema', 'v1' ) ) {
+        return;
+    }
+
+    echo '<style>
+        .cm-header-card .cm-stats-row > .cm-stat-item:nth-child(4){display:none!important;}
+        .cm-header-card .cm-stats-row{grid-template-columns:repeat(3,minmax(0,1fr))!important;}
+        @media (max-width:768px){.cm-header-card .cm-stats-row{grid-template-columns:1fr!important;}}
+    </style>';
+}
