@@ -108,7 +108,11 @@ class Pro_SCM_Frontend {
         $global_payment         = (float) get_option( 'cm_global_total_payment', 0 );
         $data_schema            = (string) get_option( 'cm_data_schema', 'v1' );
         $is_v2                  = ( 'v2' === $data_schema );
-        $country_filter_enabled = apply_filters( 'cm_country_filter_enabled', ! $is_v2, $data_schema );
+        $country_filter_enabled = apply_filters(
+            'cm_country_filter_enabled',
+            (bool) get_option( 'cm_country_filter_enabled', 1 ),
+            $data_schema
+        );
 
         $my_campaigns = $this->get_visible_campaigns_for_user( $user_id );
         $totals       = $this->get_campaign_totals( $my_campaigns );
@@ -123,8 +127,12 @@ class Pro_SCM_Frontend {
                 $rows = get_post_meta( $post->ID, 'campaign_rows', true );
                 if ( is_array( $rows ) ) {
                     foreach ( $rows as $row ) {
-                        if ( ! empty( $row['ulke'] ) ) {
-                            $country_set[ trim( $row['ulke'] ) ] = true;
+                        $country_value = $is_v2
+                            ? ( $row['country'] ?? '' )
+                            : ( $row['ulke'] ?? '' );
+
+                        if ( ! empty( $country_value ) ) {
+                            $country_set[ trim( $country_value ) ] = true;
                         }
                     }
                 }
@@ -289,7 +297,7 @@ class Pro_SCM_Frontend {
                             <table class="cm-datatable display nowrap" style="width:100%">
                                 <thead>
                                     <tr>
-                                        <th><?php echo $is_v2 ? 'Lokasyon' : 'Ülke / Mecra'; ?></th>
+                                        <th><?php echo $is_v2 ? 'Ülke / Bölge' : 'Ülke / Mecra'; ?></th>
                                         <th>Tarih</th>
                                         <th class="text-right">Impression</th>
                                         <th class="text-right">Click</th>
@@ -309,11 +317,14 @@ class Pro_SCM_Frontend {
                                         $row_cpc         = isset( $row['cpc'] ) ? (float) $row['cpc'] : 0;
                                         $row_conversions = isset( $row['conversions'] ) ? (float) $row['conversions'] : 0;
                                         $location        = ! empty( $row['location'] ) ? $row['location'] : ( $row['ulke'] ?? '' );
+                                        $country         = ! empty( $row['country'] ) ? $row['country'] : $location;
                                         ?>
                                         <tr>
                                             <td>
-                                                <div class="cm-country-badge"><?php echo esc_html( $location ); ?></div>
-                                                <?php if ( ! $is_v2 && ! empty( $row['mecra'] ) ) : ?>
+                                                <div class="cm-country-badge"><?php echo esc_html( $is_v2 ? $country : $location ); ?></div>
+                                                <?php if ( $is_v2 && $location && $location !== $country ) : ?>
+                                                    <div class="cm-media-name"><?php echo esc_html( $location ); ?></div>
+                                                <?php elseif ( ! $is_v2 && ! empty( $row['mecra'] ) ) : ?>
                                                     <div class="cm-media-name"><?php echo esc_html( $row['mecra'] ); ?></div>
                                                 <?php endif; ?>
                                             </td>

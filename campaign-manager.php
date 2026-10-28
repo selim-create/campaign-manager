@@ -2,7 +2,7 @@
 /*
 Plugin Name: AdOps Data Core
 Description: Ad Server verilerini işler ve dashboard'a yansıtır.
-Version: 3.6
+Version: 3.7.0
 Author: AdOps Team
 */
 
@@ -83,8 +83,11 @@ function cm_handle_sync_page() {
         $dashboard_url = isset($_POST['dashboard_csv']) ? sanitize_text_field($_POST['dashboard_csv']) : '';
         $payment_url = isset($_POST['payment_csv']) ? sanitize_text_field($_POST['payment_csv']) : '';
         
+        $country_breakdown = isset($_POST['country_breakdown']) ? 1 : 0;
+
         update_option('cm_dashboard_csv_url', $dashboard_url);
         update_option('cm_payment_csv_url', $payment_url);
+        update_option('cm_country_filter_enabled', $country_breakdown);
 
         $result = cm_sync_google_sheet_data($dashboard_url, $payment_url);
         
@@ -99,6 +102,7 @@ function cm_handle_sync_page() {
 
     $saved_dash = get_option('cm_dashboard_csv_url', '');
     $saved_pay = get_option('cm_payment_csv_url', '');
+    $country_breakdown = (int) get_option('cm_country_filter_enabled', 1);
 
     ?>
     <div style="display:flex; gap:20px; margin-top:20px;">
@@ -117,6 +121,16 @@ function cm_handle_sync_page() {
                     <tr>
                         <th style="padding-left:0;"><label>Financial Data Endpoint:</label></th>
                         <td><input type="text" name="payment_csv" value="<?php echo esc_attr($saved_pay); ?>" class="regular-text" style="width:100%;" placeholder="https://api.finance-server.com/v1/billing..."></td>
+                    </tr>
+                    <tr>
+                        <th style="padding-left:0;"><label>Ülke kırılımı:</label></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="country_breakdown" value="1" <?php checked($country_breakdown, 1); ?>>
+                                Müşteri panelinde ülke filtresini ve ülke satırlarını göster
+                            </label>
+                            <p class="description">V2 veri akışında <code>country</code> alanını filtre ve tablo satırı olarak kullanır. Kapatıldığında veri korunur, yalnızca müşteri görünümünden gizlenir.</p>
+                        </td>
                     </tr>
                 </table>
                 <input type="hidden" name="cm_sync_now" value="1">
