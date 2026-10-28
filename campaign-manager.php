@@ -2,7 +2,7 @@
 /*
 Plugin Name: AdOps Data Core
 Description: Ad Server verilerini işler ve dashboard'a yansıtır.
-Version: 3.7.0
+Version: 3.8.0
 Author: AdOps Team
 */
 
@@ -16,6 +16,7 @@ define( 'CM_URL', plugin_dir_url( __FILE__ ) );
 require_once CM_PATH . 'includes/post-types.php';
 require_once CM_PATH . 'includes/meta-boxes.php';
 require_once CM_PATH . 'includes/admin-columns.php';
+require_once CM_PATH . 'includes/bulk-assignment.php';
 require_once CM_PATH . 'includes/frontend.php';
 require_once CM_PATH . 'includes/sync.php';
 
